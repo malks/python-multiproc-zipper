@@ -7,6 +7,7 @@
 #  python3 -m pip install --upgrade pip
 #  python3 -m pip install --upgrade Pillow
 #  python3 -m pip install boto3
+#  python3 -m pip install wget
 ###########################################################################################
 #Importo alguns recursos necessários
 import os,wget,requests,glob,boto3,zipfile,shutil
@@ -197,9 +198,9 @@ if __name__ == "__main__":
   main_conn=new_conn()
   running=run_select("SELECT numero_nota,serie_nota FROM lepard_magento.systextil_notas where status='R'",main_conn)
   running=len(running)
-  max_threads=4-running
+  max_threads=8-running
 
-  if running>3:
+  if running>7:
     quit()
   run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 1 MONTH),'%Y-%m-%d')",main_conn)
   #Pega as notas importadas
