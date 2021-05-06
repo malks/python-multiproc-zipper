@@ -27,7 +27,7 @@ resized_url="https://marketing-lunelli.s3-sa-east-1.amazonaws.com/resizedimages/
 zip_url="https://marketing-lunelli.s3-sa-east-1.amazonaws.com/produtoimagem/"
 work_dir=os.path.join(os.getcwd(),'workdir')
 logos_dir=os.path.join(work_dir,'logos')
-logo_position=(70,40)
+logo_position=(30,40)
 img_variations=[
   ".jpg",
   "-variacao01.jpg",
