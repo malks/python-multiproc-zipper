@@ -26,6 +26,7 @@ from PIL import Image
 resized_url="https://marketing-lunelli.s3-sa-east-1.amazonaws.com/resizedimages/"
 zip_url="https://marketing-lunelli.s3-sa-east-1.amazonaws.com/produtoimagem/"
 work_dir=os.path.join(os.getcwd(),'workdir')
+logos_dir=os.path.join(work_dir,'logos')
 logo_position=(70,40)
 img_variations=[
   ".jpg",
@@ -37,7 +38,7 @@ img_urls=[
   "https://qg.lunenderstore.com/produtosb2b/",
   "https://qg.lunenderstore.com/produtos/"
 ]
-logos={
+logos_web={
   "alakazoo":"https://marketing-lunelli.s3-sa-east-1.amazonaws.com/desenv/marcas/alakazoo/logo_akz.png",
   "fico":"https://marketing-lunelli.s3-sa-east-1.amazonaws.com/desenv/marcas/fico/fico_logo.png",
   "graphene":"https://marketing-lunelli.s3-sa-east-1.amazonaws.com/desenv/marcas/graphene/logo_black_graphene.png",
@@ -46,6 +47,16 @@ logos={
   "lezalez":"https://marketing-lunelli.s3-sa-east-1.amazonaws.com/desenv/marcas/lezalez/lezalez-black.png",
   "lunender":"https://marketing-lunelli.s3-sa-east-1.amazonaws.com/desenv/marcas/lunender/lunender.png",
   "maismulher":"https://marketing-lunelli.s3-sa-east-1.amazonaws.com/desenv/marcas/maismulher/maismulher.png"
+}
+logos={
+  "alakazoo":os.path.join(work_dir,"logos","alakazoo.jpg"),
+  "fico":os.path.join(work_dir,"logos","fico.jpg"),
+  "graphene":os.path.join(work_dir,"logos","graphene.jpg"),
+  "hangar":os.path.join(work_dir,"logos","hangar.jpg"),
+  "hits":os.path.join(work_dir,"logos","hits.jpg"),
+  "lezalez":os.path.join(work_dir,"logos","lezalez.jpg"),
+  "lunender":os.path.join(work_dir,"logos","lunender.jpg"),
+  "maismulher":os.path.join(work_dir,"logos","maismulher.jpg"),
 }
 
 #Link retorna imagem?
@@ -56,6 +67,8 @@ def exists(path):
       return True
    return False
   
+
+
 
 #Baixamos a imagem original para depois trabalhar com ela, movê-la para a pasta de redimensionadas e zipá-la
 def download_source(item,source_dir):
@@ -116,7 +129,7 @@ def reduction_and_stamping(item,source_dir,resized_dir):
   #Pego link para a logo, abro e jogo dentro da varivel logo_image
   proc_logo_url=get_marca_logo(item)
   if not proc_logo_url==False:
-    logo_image=Image.open(requests.get(proc_logo_url, stream=True).raw)
+    logo_image=Image.open(proc_logo_url)
   items_dir=os.path.join(source_dir,item["item"]+"*")
   files=glob.glob(items_dir)
 
