@@ -82,9 +82,7 @@ def download_source(item,source_dir):
 
 #Se ja existe a imagem redimensionada, não precisa criá-la, baixamos no diretório de trabalho para zipá-la
 def download_resized(item,resized_dir):
-  print(item["images"])
   for img in item["images"]:
-    print(img)
     if not os.path.exists(os.path.join(resized_dir,img.split("/")[-1])):
       if exists(img):
         wget.download(img,resized_dir)
@@ -162,13 +160,11 @@ def zipem(nota_dir,resized_dir,item,nota):
 #Executa processos em cima de notas e itens
 def ready_go(nota):
   proc_conn=new_conn()
-  print("INICIANDO NOTA "+nota["numero_nota"]+nota["serie_nota"])
   for item in nota["items"]:
     nota_dir=item['numero_nota']+item['serie_nota']
     full_dir=os.path.join(work_dir,nota_dir)
     source_dir=os.path.join(full_dir,"sources")
     resized_dir=os.path.join(full_dir,"resized")
-    print("INICIANDO ITEM "+item["item"]+" DA NOTA "+nota["numero_nota"]+nota["serie_nota"])
 
     if not os.path.exists(full_dir):
       os.mkdir(full_dir)
