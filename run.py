@@ -73,7 +73,11 @@ def exists(path):
       return True
    return False
   
-
+def exists_resized(path):
+  r=requests.head(path)
+  if r.status_code==200:
+    return True
+  return False
 
 
 #Baixamos a imagem original para depois trabalhar com ela, movê-la para a pasta de redimensionadas e zipá-la
@@ -89,9 +93,8 @@ def download_source(item,source_dir):
 #Se ja existe a imagem redimensionada, não precisa criá-la, baixamos no diretório de trabalho para zipá-la
 def download_resized(item,resized_dir):
   for img in item["images"]:
-    if not os.path.exists(os.path.join(resized_dir,img.split("/")[-1])):
-      if exists(img):
-        wget.download(img,resized_dir)
+    if exists_resized(img):
+      wget.download(img,resized_dir)
 
 
 #Faz o upload dos itens redimensionados e com logo
@@ -101,7 +104,7 @@ def upload_resized(resized_dir,item):
   s3_client = boto3.client('s3')
 
   for file_name in files:
-    if not exists(resized_url+file_name.split("/")[-1]):
+    if not exists_resized(resized_url+file_name.split("/")[-1]):
       s3_client.upload_file(file_name, 'marketing-lunelli', "resizedimages/"+file_name.split("/")[-1])
     item["images"].append(resized_url+file_name.split("/")[-1])
 
@@ -186,7 +189,7 @@ def ready_go(nota):
       reduction_and_stamping(item,source_dir,resized_dir)
     else:
       download_resized(item,resized_dir)
-    
+
     upload_resized(resized_dir,item)
     zipem(full_dir,resized_dir,item,nota)
     for img in item["images"]:
