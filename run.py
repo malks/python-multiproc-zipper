@@ -21,6 +21,9 @@ from mysql_connection import run_select,run_sql,run_select_array_ret,new_conn
 
 #Importa modulo de Imagens
 from PIL import Image
+from PIL import ImageFile
+
+ImageFile.LOAD_TRUNCATED_IMAGES=True
 
 #Variáveis de trabalho
 resized_url="https://marketing-lunelli.s3-sa-east-1.amazonaws.com/resizedimages/"
