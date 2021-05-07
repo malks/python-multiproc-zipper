@@ -141,7 +141,7 @@ def reduction_and_stamping(item,source_dir,resized_dir):
   files=glob.glob(items_dir)
 
   for img in files:
-    if not os.path.exists(os.path.join(resized_dir,img.split("/")[-1])):
+    if not os.path.exists(os.path.join(resized_dir,img.split("/")[-1])) and os.path.getsize(img)>0:
       source_image=Image.open(img)
       work_image=source_image.copy()
       work_image.thumbnail((1000,1000))
