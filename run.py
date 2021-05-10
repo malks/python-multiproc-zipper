@@ -155,8 +155,11 @@ def zipem(nota_dir,resized_dir,item,nota):
   current_date=date.today().strftime("%Y%m%d")
   s3_client = boto3.client('s3')
 
-  nota_zip_file=os.path.join(nota_dir,current_date+item['numero_nota']+item['serie_nota']+".zip")
-
+  if not nota["nome_arquivo"]==None and not nota["nome_arquivo"]=="":
+    nota_zip_file=os.path.join(nota_dir,nota["nome_arquivo"])
+  else:
+    nota_zip_file=os.path.join(nota_dir,current_date+item['numero_nota']+item['serie_nota']+".zip")
+    
   with zipfile.ZipFile(nota_zip_file, 'w') as my_zip:
     for file_name in files:
       my_zip.write(file_name,file_name.split("/")[-1],compress_type=zipfile.ZIP_DEFLATED)
