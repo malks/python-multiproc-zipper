@@ -104,7 +104,7 @@ def upload_resized(resized_dir,item):
   s3_client = boto3.client('s3')
 
   for file_name in files:
-    if not exists_resized(resized_url+file_name.split("/")[-1]):
+    if not exists_resized(resized_url+file_name.split("/")[-1]) and not file_name==None and not file_name.find("(1)")==-1:
       s3_client.upload_file(file_name, 'marketing-lunelli', "resizedimages/"+file_name.split("/")[-1])
     item["images"].append(resized_url+file_name.split("/")[-1])
 
@@ -147,22 +147,28 @@ def reduction_and_stamping(item,source_dir,resized_dir):
       work_image.thumbnail((1000,1000))
       if not proc_logo_url==False:
         work_image.paste(logo_image,logo_position)
-      work_image.save(os.path.join(resized_dir,img.split("/")[-1]))
+      if not os.path.exists(os.path.join(resized_dir,img.split("/")[-1])):
+        work_image.save(os.path.join(resized_dir,img.split("/")[-1]))
 
 
-def zipem(nota_dir,resized_dir,item,nota):
+def zipem(nota_dir,resized_dir,nota):
+  print("EI ESTOU COMEÇANDO A ZIPAR")
   files=glob.glob(os.path.join(resized_dir,"*.jpg"))
+
   current_date=date.today().strftime("%Y%m%d")
   s3_client = boto3.client('s3')
 
   if not nota["nome_arquivo"]==None and not nota["nome_arquivo"]=="":
     nota_zip_file=os.path.join(nota_dir,nota["nome_arquivo"])
   else:
-    nota_zip_file=os.path.join(nota_dir,current_date+item['numero_nota']+item['serie_nota']+".zip")
+    nota_zip_file=os.path.join(nota_dir,current_date+nota['numero_nota']+nota['serie_nota']+".zip")
     
   with zipfile.ZipFile(nota_zip_file, 'w') as my_zip:
     for file_name in files:
-      my_zip.write(file_name,file_name.split("/")[-1],compress_type=zipfile.ZIP_DEFLATED)
+      if not file_name==None and not file_name.find("(1)")==-1:
+        print(file_name)
+        print(file_name.split("/")[-1])
+        my_zip.write(file_name,file_name.split("/")[-1],compress_type=zipfile.ZIP_DEFLATED)
 
   if not exists(zip_url+nota_zip_file.split("/")[-1]):
     s3_client.upload_file(nota_zip_file, 'marketing-lunelli', "produtoimagem/"+nota_zip_file.split("/")[-1])
@@ -193,8 +199,11 @@ def ready_go(nota):
     else:
       download_resized(item,resized_dir)
 
+
+  zipem(full_dir,resized_dir,nota)
+
+  for item in nota["items"]:
     upload_resized(resized_dir,item)
-    zipem(full_dir,resized_dir,item,nota)
     for img in item["images"]:
       run_sql("INSERT IGNORE INTO lepard_magento.systextil_notas_itens_images (item,image) values('"+item["item"]+"','"+img+"')",proc_conn)
 
