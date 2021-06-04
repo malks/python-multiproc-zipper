@@ -28,8 +28,17 @@ def run_select(select,conn):
 
 
 def run_sql(sql,conn):
+  if not conn.is_connected():
+    conn.reconnect()
+    
   cursor = conn.cursor()
-  cursor.execute(sql)
+
+  try:
+    cursor.execute(sql)
+  except mysql.connector.errors.OperationalError:
+    conn.reconnect()
+    cursor.execute(sql)
+
   conn.commit()
   return True
 

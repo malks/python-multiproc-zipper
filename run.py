@@ -15,6 +15,7 @@ from multiprocessing import Process
 
 from botocore.exceptions import ClientError
 from datetime import date
+from time import sleep
 
 #Se fizer a importação de mysql_connection (meu script q conecta no nosso banco e cria a variavel de conexão) diretamente, a variavel mydb_conn não é definida, tem que ser como abaixo
 from mysql_connection import run_select,run_sql,run_select_array_ret,new_conn
@@ -67,34 +68,80 @@ logos={
 
 #Link retorna imagem?
 def exists(path):
-   image_formats = ("image/png", "image/jpeg", "image/jpg")
-   r = requests.head(path)
-   if r.headers["content-type"] in image_formats:
-      return True
-   return False
+  print("Exst: "+path)
+  image_formats = ("image/png", "image/jpeg", "image/jpg")
+  r = requests.head(path)
+  if r.headers["content-type"] in image_formats:
+    return True
+  return False
   
 def exists_resized(path):
+  print("Exst Rszd: "+path)
   r=requests.head(path)
   if r.status_code==200:
     return True
   return False
 
+  
 
 #Baixamos a imagem original para depois trabalhar com ela, movê-la para a pasta de redimensionadas e zipá-la
-def download_source(item,source_dir):
+def download_source(item,source_dir,resized_dir):
   for img_var in img_variations:
-    if not os.path.exists(os.path.join(source_dir,item['item']+img_var)):
+    if not os.path.exists(os.path.join(source_dir,item['item']+img_var)) and not os.path.exists(os.path.join(resized_dir,item['item']+img_var)):
       if exists(img_urls[0]+item['item']+img_var):
-        wget.download(img_urls[0]+item['item']+img_var,source_dir)
+        try:
+          wget.download(img_urls[0]+item['item']+img_var,source_dir)
+        except OSError:
+          print("Falhou um download: "+item['item']+img_var)
+          sleep(0.05)
+          continue
+        except ConnectionResetError:
+          print("Falhou um download: "+item['item']+img_var)
+          sleep(0.05)
+          continue
+        except ConnectionAbortedError:
+          print("Falhou um download: "+item['item']+img_var)
+          sleep(0.05)
+          continue      
       elif exists(img_urls[1]+item['item']+img_var):
-        wget.download(img_urls[1]+item['item']+img_var,source_dir)
+        try:
+          wget.download(img_urls[1]+item['item']+img_var,source_dir)
+        except OSError:
+          print("Falhou um download: "+item['item']+img_var)
+          sleep(0.05)
+          continue
+        except ConnectionResetError:
+          print("Falhou um download: "+item['item']+img_var)
+          sleep(0.05)
+          continue
+        except ConnectionAbortedError:
+          print("Falhou um download: "+item['item']+img_var)
+          sleep(0.05)
+          continue      
+
 
 
 #Se ja existe a imagem redimensionada, não precisa criá-la, baixamos no diretório de trabalho para zipá-la
 def download_resized(item,resized_dir):
   for img in item["images"]:
-    if exists_resized(img):
-      wget.download(img,resized_dir)
+    if not img.find("(1)")==-1 and not os.path.exists(os.path.join(resized_dir,img)):
+      if exists_resized(img):
+        try:
+          print("Tentando baixar...")
+          wget.download(img,resized_dir)
+        except OSError:
+          print("Falhou um download: "+img)
+          sleep(0.05)
+          continue
+        except ConnectionResetError:
+          print("Falhou um download: "+img)
+          sleep(0.05)
+          continue
+        except ConnectionAbortedError:
+          print("Falhou um download: "+img)
+          sleep(0.05)
+          continue      
+
 
 
 #Faz o upload dos itens redimensionados e com logo
@@ -142,13 +189,19 @@ def reduction_and_stamping(item,source_dir,resized_dir):
 
   for img in files:
     if not os.path.exists(os.path.join(resized_dir,img.split("/")[-1])) and os.path.getsize(img)>0:
-      source_image=Image.open(img)
-      work_image=source_image.copy()
-      work_image.thumbnail((1000,1000))
-      if not proc_logo_url==False:
-        work_image.paste(logo_image,logo_position)
-      if not os.path.exists(os.path.join(resized_dir,img.split("/")[-1])):
-        work_image.save(os.path.join(resized_dir,img.split("/")[-1]))
+      try:
+        source_image=Image.open(img)
+        work_image=source_image.copy()
+        work_image.thumbnail((1000,1000))
+        if not proc_logo_url==False:
+          work_image.paste(logo_image,logo_position)
+        if not os.path.exists(os.path.join(resized_dir,img.split("/")[-1])):
+          work_image.save(os.path.join(resized_dir,img.split("/")[-1]))
+      except OSError:
+        print("Falhou uma imagem: "+img)
+        sleep(0.05)
+        continue
+
 
 
 def zipem(nota_dir,resized_dir,nota):
@@ -168,7 +221,13 @@ def zipem(nota_dir,resized_dir,nota):
       if not file_name==None and not file_name.find("(1)")==-1:
         print(file_name)
         print(file_name.split("/")[-1])
-        my_zip.write(file_name,file_name.split("/")[-1],compress_type=zipfile.ZIP_DEFLATED)
+        try:
+          my_zip.write(file_name,file_name.split("/")[-1],compress_type=zipfile.ZIP_DEFLATED)
+        except OSError:
+          print("Falhou zipar imagem: "+file_name.split("/")[-1])
+          sleep(0.05)
+          continue
+
 
   if not exists(zip_url+nota_zip_file.split("/")[-1]):
     s3_client.upload_file(nota_zip_file, 'marketing-lunelli', "produtoimagem/"+nota_zip_file.split("/")[-1])
@@ -194,7 +253,7 @@ def ready_go(nota):
       os.mkdir(resized_dir)
 
     if not len(item['images'])>0:
-      download_source(item,source_dir)
+      download_source(item,source_dir,resized_dir)
       reduction_and_stamping(item,source_dir,resized_dir)
     else:
       download_resized(item,resized_dir)
@@ -220,7 +279,7 @@ def ready_go(nota):
 def get_items(nota,serie,conn):
   ret=run_select("SELECT * FROM lepard_magento.systextil_notas_itens WHERE numero_nota='"+nota+"' and serie_nota='"+serie+"'",conn)
   for i in ret:
-    i["images"]=run_select_array_ret("SELECT image FROM lepard_magento.systextil_notas_itens_images WHERE item='"+i["item"]+"'",conn)
+    i["images"]=run_select_array_ret("SELECT image FROM lepard_magento.systextil_notas_itens_images WHERE image NOT LIKE '% (1).%' AND item='"+i["item"]+"'",conn)
   return ret
 
 #Para rodar na execução do python
@@ -228,9 +287,9 @@ if __name__ == "__main__":
   main_conn=new_conn()
   running=run_select("SELECT numero_nota,serie_nota FROM lepard_magento.systextil_notas where status='R'",main_conn)
   running=len(running)
-  max_threads=8-running
+  max_threads=5-running
 
-  if running>7:
+  if running>4:
     quit()
   run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 1 MONTH),'%Y-%m-%d')",main_conn)
   #Pega as notas importadas
