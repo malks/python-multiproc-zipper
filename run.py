@@ -124,7 +124,7 @@ def download_source(item,source_dir,resized_dir):
 #Se ja existe a imagem redimensionada, não precisa criá-la, baixamos no diretório de trabalho para zipá-la
 def download_resized(item,resized_dir):
   for img in item["images"]:
-    if not img.find("(1)")==-1 and not os.path.exists(os.path.join(resized_dir,img)):
+    if img.find("(1)")==-1 and not os.path.exists(os.path.join(resized_dir,img)):
       if exists_resized(img):
         try:
           print("Tentando baixar...")
@@ -205,11 +205,9 @@ def reduction_and_stamping(item,source_dir,resized_dir):
 
 
 def zipem(nota_dir,resized_dir,nota):
-  print("EI ESTOU COMEÇANDO A ZIPAR")
   files=glob.glob(os.path.join(resized_dir,"*.jpg"))
 
   current_date=date.today().strftime("%Y%m%d")
-  s3_client = boto3.client('s3')
 
   if not nota["nome_arquivo"]==None and not nota["nome_arquivo"]=="":
     nota_zip_file=os.path.join(nota_dir,nota["nome_arquivo"])
@@ -218,9 +216,7 @@ def zipem(nota_dir,resized_dir,nota):
     
   with zipfile.ZipFile(nota_zip_file, 'w') as my_zip:
     for file_name in files:
-      if not file_name==None and not file_name.find("(1)")==-1:
-        print(file_name)
-        print(file_name.split("/")[-1])
+      if not file_name==None and file_name.find("(1)")==-1:
         try:
           my_zip.write(file_name,file_name.split("/")[-1],compress_type=zipfile.ZIP_DEFLATED)
         except OSError:
@@ -228,9 +224,8 @@ def zipem(nota_dir,resized_dir,nota):
           sleep(0.05)
           continue
 
-
-  if not exists(zip_url+nota_zip_file.split("/")[-1]):
-    s3_client.upload_file(nota_zip_file, 'marketing-lunelli', "produtoimagem/"+nota_zip_file.split("/")[-1])
+  s3_client = boto3.client('s3')
+  s3_client.upload_file(nota_zip_file, 'marketing-lunelli', "produtoimagem/"+nota_zip_file.split("/")[-1])
   nota["nome_arquivo"]=nota_zip_file.split("/")[-1]
 
     
