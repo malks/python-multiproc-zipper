@@ -266,6 +266,8 @@ def ready_go(nota):
 
   #Remove diretório da nota e seu conteúdo pra não manter sujeira no disco
   shutil.rmtree(full_dir)
+
+  proc_conn.close()
   
       
 
