@@ -282,9 +282,9 @@ if __name__ == "__main__":
   main_conn=new_conn()
   running=run_select("SELECT numero_nota,serie_nota FROM lepard_magento.systextil_notas where status='R'",main_conn)
   running=len(running)
-  max_threads=20-running
+  max_threads=30-running
 
-  if running>19:
+  if running>29:
     quit()
   run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 1 MONTH),'%Y-%m-%d')",main_conn)
   #Pega as notas importadas
