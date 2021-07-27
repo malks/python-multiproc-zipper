@@ -253,19 +253,25 @@ def ready_go(nota):
     else:
       download_resized(item,resized_dir)
 
+  got_dir = "full_dir" in locals()
 
-  zipem(full_dir,resized_dir,nota)
+  if got_dir:
+    zipem(full_dir,resized_dir,nota)
 
   for item in nota["items"]:
     upload_resized(resized_dir,item)
     for img in item["images"]:
       run_sql("INSERT IGNORE INTO lepard_magento.systextil_notas_itens_images (item,image) values('"+item["item"]+"','"+img+"')",proc_conn)
 
+  got_key=nota.get("nome_arquivo",None)
+  if got_key==None:
+    nota["nome_arquivo"]=""
   #Atualiza banco para depois atualizar o systextil
   run_sql("UPDATE lepard_magento.systextil_notas SET status='S',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
 
   #Remove diretório da nota e seu conteúdo pra não manter sujeira no disco
-  shutil.rmtree(full_dir)
+  if got_dir:
+    shutil.rmtree(full_dir)
 
   proc_conn.close()
   
