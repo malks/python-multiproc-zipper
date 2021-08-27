@@ -288,11 +288,13 @@ def get_items(nota,serie,conn):
 #Para rodar na execução do python
 if __name__ == "__main__":
   main_conn=new_conn()
-  running=run_select("SELECT numero_nota,serie_nota FROM lepard_magento.systextil_notas where status='R'",main_conn)
-  running=len(running)
-  max_threads=10-running
+  running=run_select("SELECT numero_nota,serie_nota,time_to_sec(timediff(NOW(),updated_at ))/3600 as running_time FROM lepard_magento.systextil_notas where status='R' order by updated_at DESC",main_conn)
+  con_running=len(running)
+  max_threads=10-con_running
 
-  if running>9:
+  if con_running>9:
+    if running[0]['running_time']>5:
+      run_sql("UPDATE lepard_magento.systextil_notas SET status='P' WHERE status='R' AND numero_nota='"+running[0]['numero_nota']+"' AND serie_nota='"+running[0]['serie_nota']+"'",main_conn)
     quit()
   run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 1 MONTH),'%Y-%m-%d')",main_conn)
   #Pega as notas importadas
