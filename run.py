@@ -292,9 +292,10 @@ if __name__ == "__main__":
   con_running=len(running)
   max_threads=10-con_running
 
+  if running[0]['running_time']>5:
+    run_sql("UPDATE lepard_magento.systextil_notas SET status='P' WHERE status='R' AND numero_nota='"+running[0]['numero_nota']+"' AND serie_nota='"+running[0]['serie_nota']+"'",main_conn)
+
   if con_running>9:
-    if running[0]['running_time']>5:
-      run_sql("UPDATE lepard_magento.systextil_notas SET status='P' WHERE status='R' AND numero_nota='"+running[0]['numero_nota']+"' AND serie_nota='"+running[0]['serie_nota']+"'",main_conn)
     quit()
   run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 1 MONTH),'%Y-%m-%d')",main_conn)
   #Pega as notas importadas
