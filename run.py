@@ -288,7 +288,7 @@ def get_items(nota,serie,conn):
 #Para rodar na execução do python
 if __name__ == "__main__":
   main_conn=new_conn()
-  running=run_select("SELECT numero_nota,serie_nota,time_to_sec(timediff(NOW(),updated_at ))/3600 as running_time FROM lepard_magento.systextil_notas where status='R' order by updated_at DESC",main_conn)
+  running=run_select("SELECT numero_nota,serie_nota,time_to_sec(timediff(NOW(),updated_at ))/3600 as running_time FROM lepard_magento.systextil_notas where status='R' order by updated_at ASC",main_conn)
   con_running=len(running)
   max_threads=10-con_running
 
