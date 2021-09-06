@@ -65,11 +65,11 @@ logos={
   "lunender":os.path.join(work_dir,"logos","lunender.jpg"),
   "maismulher":os.path.join(work_dir,"logos","maismulher.jpg"),
 }
+image_formats = ("image/png", "image/jpeg", "image/jpg")
 
 #Link retorna imagem?
 def exists(path):
   print("Exst: "+path)
-  image_formats = ("image/png", "image/jpeg", "image/jpg")
   r = requests.head(path)
   if r.headers["content-type"] in image_formats:
     return True
@@ -78,11 +78,9 @@ def exists(path):
 def exists_resized(path):
   print("Exst Rszd: "+path)
   r=requests.head(path)
-  if r.status_code==200:
+  if r.headers["content-type"] in image_formats:
     return True
   return False
-
-  
 
 #Baixamos a imagem original para depois trabalhar com ela, movê-la para a pasta de redimensionadas e zipá-la
 def download_source(item,source_dir,resized_dir):
@@ -140,7 +138,7 @@ def download_resized(item,resized_dir):
         except ConnectionAbortedError:
           print("Falhou um download: "+img)
           sleep(0.05)
-          continue      
+          continue   
 
 
 
@@ -148,19 +146,19 @@ def download_resized(item,resized_dir):
 def upload_resized(resized_dir,item):
   items_dir=os.path.join(resized_dir,item["item"]+"*")
   files=glob.glob(items_dir)
+  print(files)
   s3_client = boto3.client('s3')
 
   for file_name in files:
-    if not exists_resized(resized_url+file_name.split("/")[-1]) and not file_name==None and not file_name.find("(1)")==-1:
+    if not exists_resized(resized_url+file_name.split("/")[-1]) and not file_name==None and file_name.find("(1)")==-1:
+      print('subindo'+file_name)
       s3_client.upload_file(file_name, 'marketing-lunelli', "resizedimages/"+file_name.split("/")[-1])
-    item["images"].append(resized_url+file_name.split("/")[-1])
+      item["images"].append(resized_url+file_name.split("/")[-1])
 
 
 #Retorna o link da logo de cada marca, é assim porque a marca no banco não vem sempre certo, tem Lunender Jeans, basicos, etc
 def get_marca_logo(item):
-  if item["marca"].lower().find('lunender')>=0:
-    return logos["lunender"]
-  elif item["marca"].lower().find('lez')>=0:
+  if item["marca"].lower().find('lez')>=0:
     return logos["lezalez"]
   elif item["marca"].lower().find('alakazoo')>=0:
     return logos["alakazoo"]
@@ -174,6 +172,8 @@ def get_marca_logo(item):
     return logos["maismulher"]
   elif item["marca"].lower().find('fico')>=0:
     return logos["fico"]
+  elif item["marca"].lower().find('lunender')>=0:
+    return logos["lunender"]
   else:
     return False
 
@@ -261,13 +261,23 @@ def ready_go(nota):
   for item in nota["items"]:
     upload_resized(resized_dir,item)
     for img in item["images"]:
-      run_sql("INSERT IGNORE INTO lepard_magento.systextil_notas_itens_images (item,image) values('"+item["item"]+"','"+img+"')",proc_conn)
+      if exists_resized(img):
+        run_sql("INSERT IGNORE INTO lepard_magento.systextil_notas_itens_images (item,image) values('"+item["item"]+"','"+img+"')",proc_conn)
+      else:
+        run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE item='"+item["item"]+"' AND image='"+img+"'",proc_conn)
+
+  notas_got_images=run_select("SELECT COUNT(*) AS conta_images FROM systextil_notas_itens_images snii JOIN systextil_notas_itens sni ON sni.item=snii.item WHERE sni.numero_nota='"+nota["numero_nota"]+"' AND sni.serie_nota='"+nota["serie_nota"]+"'",proc_conn)
 
   got_key=nota.get("nome_arquivo",None)
+
   if got_key==None:
     nota["nome_arquivo"]=""
+  
   #Atualiza banco para depois atualizar o systextil
-  run_sql("UPDATE lepard_magento.systextil_notas SET status='S',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
+  if notas_got_images[0]["conta_images"]>0:
+    run_sql("UPDATE lepard_magento.systextil_notas SET status='S',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
+  else:
+    run_sql("UPDATE lepard_magento.systextil_notas SET status='E',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
 
   #Remove diretório da nota e seu conteúdo pra não manter sujeira no disco
   if got_dir:
