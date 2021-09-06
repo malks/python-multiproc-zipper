@@ -274,7 +274,7 @@ def ready_go(nota):
     nota["nome_arquivo"]=""
   
   #Atualiza banco para depois atualizar o systextil
-  if notas_got_images[0]["conta_images"]>0:
+  if len(notas_got_images)>0 and notas_got_images[0]["conta_images"]>0:
     run_sql("UPDATE lepard_magento.systextil_notas SET status='S',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
   else:
     run_sql("UPDATE lepard_magento.systextil_notas SET status='E',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
