@@ -263,10 +263,6 @@ def ready_go(nota):
     for img in item["images"]:
       if exists_resized(img):
         run_sql("INSERT IGNORE INTO lepard_magento.systextil_notas_itens_images (item,image) values('"+item["item"]+"','"+img+"')",proc_conn)
-      else:
-        run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE item='"+item["item"]+"' AND image='"+img+"'",proc_conn)
-
-  notas_got_images=run_select("SELECT COUNT(*) AS conta_images FROM lepard_magento.systextil_notas_itens_images snii JOIN lepard_magento.systextil_notas_itens sni ON sni.item=snii.item WHERE sni.numero_nota='"+nota["numero_nota"]+"' AND sni.serie_nota='"+nota["serie_nota"]+"'",proc_conn)
 
   got_key=nota.get("nome_arquivo",None)
 
@@ -274,9 +270,10 @@ def ready_go(nota):
     nota["nome_arquivo"]=""
   
   filesize=os.path.getsize(os.path.join(full_dir,nota["nome_arquivo"]))
-
+  if filesize>100:
+    print("LEGAL")
   #Atualiza banco para depois atualizar o systextil
-  if filesize>100 and len(notas_got_images)>0 and notas_got_images[0]["conta_images"]>0:
+  if filesize>100:
     run_sql("UPDATE lepard_magento.systextil_notas SET status='S',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
   else:
     run_sql("UPDATE lepard_magento.systextil_notas SET status='E',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
