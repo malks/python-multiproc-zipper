@@ -174,7 +174,7 @@ def get_marca_logo(item):
     return logos["fico"]
   elif item["marca"].lower().find('lunender')>=0:
     return logos["lunender"]
-  elif item["marca"].lower().find('LND')>=0:
+  elif item["marca"].lower().find('lnd')>=0:
     return logos["lunender"]
   else:
     return False
