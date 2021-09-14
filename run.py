@@ -65,7 +65,7 @@ logos={
   "lunender":os.path.join(work_dir,"logos","lunender.jpg"),
   "maismulher":os.path.join(work_dir,"logos","maismulher.jpg"),
 }
-image_formats = ("image/png", "image/jpeg", "image/jpg")
+image_formats = ("image/png", "image/jpeg", "image/jpg","binary/octet-stream")
 
 #Link retorna imagem?
 def exists(path):
