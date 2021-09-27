@@ -39,6 +39,10 @@ img_variations=[
   "-C1.jpg",
   "-C2.jpg",
   "-C3.jpg",
+  "-C4.jpg",
+  "-D1.jpg",
+  "-D2.jpg",
+  "-D3.jpg",
   "-still.jpg"
 ]
 img_urls=[
