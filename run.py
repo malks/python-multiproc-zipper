@@ -34,8 +34,11 @@ logos_dir=os.path.join(work_dir,'logos')
 logo_position=(30,40)
 img_variations=[
   ".jpg",
+  "-variacao.jpg",
   "-variacao01.jpg",
   "-variacao02.jpg",
+  "-variacao03.jpg",
+  "-variacao04.jpg",
   "-C1.jpg",
   "-C2.jpg",
   "-C3.jpg",
@@ -43,6 +46,7 @@ img_variations=[
   "-D1.jpg",
   "-D2.jpg",
   "-D3.jpg",
+  "-D4.jpg",
   "-still.jpg"
 ]
 img_urls=[
