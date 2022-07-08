@@ -310,7 +310,7 @@ if __name__ == "__main__":
   main_conn=new_conn()
   running=run_select("SELECT numero_nota,serie_nota,time_to_sec(timediff(NOW(),updated_at ))/3600 as running_time FROM lepard_magento.systextil_notas where status='R' order by updated_at ASC",main_conn)
   con_running=len(running)
-  max_threads=160-con_running
+  max_threads=16-con_running
 
   if len(running)>0:
     if running[0]['running_time']>5:
