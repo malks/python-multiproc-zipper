@@ -10,7 +10,7 @@
 #  python3 -m pip install wget
 ###########################################################################################
 #Importo alguns recursos necessários
-import os,wget,requests,glob,boto3,zipfile,shutil
+import os,wget,requests,glob,boto3,zipfile,shutil,socket
 from multiprocessing import Process
 
 from botocore.exceptions import ClientError
@@ -25,6 +25,18 @@ from PIL import Image
 from PIL import ImageFile
 
 ImageFile.LOAD_TRUNCATED_IMAGES=True
+
+thismachine=""
+f=open("thismachine","r")
+for x in f:
+  thismachine=x.strip()
+
+if thismachine=="":
+  thismachine=socket.gethostname()
+
+if thismachine=="":
+  print("Ops, gere um arquivo thismachine com um nome para a maquina no diretorio do script")
+  quit()
 
 #Variáveis de trabalho
 resized_url="https://marketing-lunelli.s3-sa-east-1.amazonaws.com/resizedimages/"
@@ -52,7 +64,6 @@ img_variations=[
 img_urls=[
   "https://qg.lunenderstore.com/produtosb2b/",
   "https://qg.lunenderstore.com/produtosb2b/geral/",
-  "https://qg.lunenderstore.com/produtos/"
 ]
 logos_web={
   "alakazoo":"https://marketing-lunelli.s3-sa-east-1.amazonaws.com/desenv/marcas/alakazoo/logo_akz.png",
@@ -285,9 +296,9 @@ def ready_go(nota):
     print("LEGAL")
   #Atualiza banco para depois atualizar o systextil
   if filesize>100:
-    run_sql("UPDATE lepard_magento.systextil_notas SET status='S',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
+    run_sql("UPDATE lepard_magento.systextil_notas SET status='S',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE machine='"+thismachine+"' AND numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
   else:
-    run_sql("UPDATE lepard_magento.systextil_notas SET status='E',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
+    run_sql("UPDATE lepard_magento.systextil_notas SET status='E',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE machine='"+thismachine+"' AND numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
 
   #Remove diretório da nota e seu conteúdo pra não manter sujeira no disco
   if got_dir:
@@ -308,23 +319,23 @@ def get_items(nota,serie,conn):
 #Para rodar na execução do python
 if __name__ == "__main__":
   main_conn=new_conn()
-  running=run_select("SELECT numero_nota,serie_nota,time_to_sec(timediff(NOW(),updated_at ))/3600 as running_time FROM lepard_magento.systextil_notas where status='R' order by updated_at ASC",main_conn)
+  running=run_select("SELECT numero_nota,serie_nota,time_to_sec(timediff(NOW(),updated_at ))/3600 as running_time FROM lepard_magento.systextil_notas where machine='"+thismachine+"' AND status='R' order by updated_at ASC",main_conn)
   con_running=len(running)
   max_threads=16-con_running
 
   if len(running)>0:
     if running[0]['running_time']>5:
-      run_sql("UPDATE lepard_magento.systextil_notas SET status='P' WHERE status='R' AND numero_nota='"+running[0]['numero_nota']+"' AND serie_nota='"+running[0]['serie_nota']+"'",main_conn)
+      run_sql("UPDATE lepard_magento.systextil_notas SET status='P' WHERE machine='"+thismachine+"' AND status='R' AND numero_nota='"+running[0]['numero_nota']+"' AND serie_nota='"+running[0]['serie_nota']+"'",main_conn)
 
   if con_running>15:
     quit()
   run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 1 MONTH),'%Y-%m-%d')",main_conn)
   #Pega as notas importadas
-  notas=run_select("SELECT numero_nota,serie_nota,status,nome_arquivo FROM lepard_magento.systextil_notas where status='P' limit "+str(max_threads),main_conn)
+  notas=run_select("SELECT numero_nota,serie_nota,status,nome_arquivo FROM lepard_magento.systextil_notas where status='P' AND machine IS NULL limit "+str(max_threads),main_conn)
 
   for nota in notas:
     nota['items']=get_items(nota['numero_nota'],nota['serie_nota'],main_conn)
-    run_sql("UPDATE lepard_magento.systextil_notas SET status='R' where numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",main_conn)
+    run_sql("UPDATE lepard_magento.systextil_notas SET status='R',machine='"+thismachine+"' where numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"' and machine IS NULL",main_conn)
 
   while len(notas)>0:
     jobs=[]
