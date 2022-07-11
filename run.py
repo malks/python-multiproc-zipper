@@ -329,7 +329,7 @@ if __name__ == "__main__":
 
   if con_running>15:
     quit()
-  run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 1 MONTH),'%Y-%m-%d')",main_conn)
+  run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 4 MONTH),'%Y-%m-%d')",main_conn)
   #Pega as notas importadas
   notas=run_select("SELECT numero_nota,serie_nota,status,nome_arquivo FROM lepard_magento.systextil_notas where status='P' AND machine IS NULL limit "+str(max_threads),main_conn)
 
