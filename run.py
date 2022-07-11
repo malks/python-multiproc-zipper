@@ -91,14 +91,14 @@ image_formats = ("image/png", "image/jpeg", "image/jpg","binary/octet-stream")
 def exists(path):
   print("Exst: "+path)
   r = requests.head(path)
-  if r.headers["content-type"] in image_formats:
+  if "content-type" in r.headers and r.headers["content-type"] in image_formats:
     return True
   return False
   
 def exists_resized(path):
   print("Exst Rszd: "+path)
   r=requests.head(path)
-  if r.headers["content-type"] in image_formats:
+  if "content-type" in r.headers and r.headers["content-type"] in image_formats:
     return True
   return False
 
