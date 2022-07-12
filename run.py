@@ -324,7 +324,7 @@ if __name__ == "__main__":
   max_threads=10-con_running
 
   if len(running)>0:
-    if running[0]['running_time']>5:
+    if running[0]['running_time']>8:
       run_sql("UPDATE lepard_magento.systextil_notas SET status='P',machine=NULL WHERE machine='"+thismachine+"' AND status='R' AND numero_nota='"+running[0]['numero_nota']+"' AND serie_nota='"+running[0]['serie_nota']+"'",main_conn)
 
   if con_running>9:
