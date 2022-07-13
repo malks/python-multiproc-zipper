@@ -38,8 +38,20 @@ if thismachine=="":
   print("Ops, gere um arquivo thismachine com um nome para a maquina no diretorio do script")
   quit()
 
+maxprocs=5
+if os.path.exists("maxprocs"):
+  f=open("maxprocs","r")
+  for x in f:
+    if x !=None and x!="":
+      maxprocs=int(x.strip())
+
+  if maxprocs<=0:
+    maxprocs=5
+
+maxrunprocs=maxprocs-1
+
 #Variáveis de trabalho
-resized_url="https://marketing-lunelli.s3-sa-east-1.amazonaws.com/resizedimages/"
+resized_url="http://mktlunelli.lunenderstore.com/resizedimages/"
 zip_url="https://marketing-lunelli.s3-sa-east-1.amazonaws.com/produtoimagem/"
 work_dir=os.path.join(os.getcwd(),'workdir')
 logos_dir=os.path.join(work_dir,'logos')
@@ -336,13 +348,13 @@ if __name__ == "__main__":
   main_conn=new_conn()
   running=run_select("SELECT numero_nota,serie_nota,time_to_sec(timediff(NOW(),updated_at ))/3600 as running_time FROM lepard_magento.systextil_notas where machine='"+thismachine+"' AND status='R' order by updated_at ASC",main_conn)
   con_running=len(running)
-  max_threads=5-con_running
+  max_threads=maxprocs-con_running
 
   if len(running)>0:
     if running[0]['running_time']>8:
       run_sql("UPDATE lepard_magento.systextil_notas SET status='P',machine=NULL WHERE machine='"+thismachine+"' AND status='R' AND numero_nota='"+running[0]['numero_nota']+"' AND serie_nota='"+running[0]['serie_nota']+"'",main_conn)
 
-  if con_running>4:
+  if con_running>maxrunprocs:
     quit()
   run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 4 MONTH),'%Y-%m-%d')",main_conn)
   #Pega as notas importadas
