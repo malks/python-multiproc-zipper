@@ -62,8 +62,8 @@ img_variations=[
   "-still.jpg"
 ]
 img_urls=[
-  "https://qg.lunenderstore.com/produtosb2b/",
-  "https://qg.lunenderstore.com/produtosb2b/geral/",
+  "http://qgprodutosb2b.lunenderstore.com/",
+  "http://qgprodutosb2b.lunenderstore.com/geral/",
 ]
 logos_web={
   "alakazoo":"https://marketing-lunelli.s3-sa-east-1.amazonaws.com/desenv/marcas/alakazoo/logo_akz.png",
@@ -89,17 +89,19 @@ image_formats = ("image/png", "image/jpeg", "image/jpg","binary/octet-stream")
 
 #Link retorna imagem?
 def exists(path):
-  print("Exst: "+path)
   r = requests.head(path)
   if "content-type" in r.headers and r.headers["content-type"] in image_formats:
+    print("Exst: "+path+" TRUE \n")
     return True
+  print("Exst: "+path+" FALSE \n")
   return False
   
 def exists_resized(path):
-  print("Exst Rszd: "+path)
   r=requests.head(path)
   if "content-type" in r.headers and r.headers["content-type"] in image_formats:
+    print("Exst Rszd: "+path+" TRUE \n")
     return True
+  print("Exst Rszd: "+path+" FALSE \n")
   return False
 
 #Baixamos a imagem original para depois trabalhar com ela, movê-la para a pasta de redimensionadas e zipá-la
@@ -108,6 +110,7 @@ def download_source(item,source_dir,resized_dir):
     if not os.path.exists(os.path.join(source_dir,item['item']+img_var)) and not os.path.exists(os.path.join(resized_dir,item['item']+img_var)):
       if exists(img_urls[0]+item['item']+img_var):
         try:
+          print("Tentando baixar original : "+img_urls[0]+item['item']+img_var+"\n")
           wget.download(img_urls[0]+item['item']+img_var,source_dir)
         except OSError:
           print("Falhou um download: "+item['item']+img_var)
@@ -123,6 +126,7 @@ def download_source(item,source_dir,resized_dir):
           continue      
       elif exists(img_urls[1]+item['item']+img_var):
         try:
+          print("Tentando baixar original : "+img_urls[0]+item['item']+img_var+"\n")
           wget.download(img_urls[1]+item['item']+img_var,source_dir)
         except OSError:
           print("Falhou um download: "+item['item']+img_var)
@@ -145,7 +149,7 @@ def download_resized(item,resized_dir):
     if img.find("(1)")==-1 and not os.path.exists(os.path.join(resized_dir,img)):
       if exists_resized(img):
         try:
-          print("Tentando baixar...")
+          print("Tentando baixar redimensionada : "+img)
           wget.download(img,resized_dir)
         except OSError:
           print("Falhou um download: "+img)
@@ -210,25 +214,32 @@ def reduction_and_stamping(item,source_dir,resized_dir):
   files=glob.glob(items_dir)
 
   for img in files:
+    print("Verificando se imagem "+img+" existe no diretorio resized...\n")
     if not os.path.exists(os.path.join(resized_dir,img.split("/")[-1])) and os.path.getsize(img)>0:
       try:
+        print("Imagem resized não existe, mas original sim\n")
         source_image=Image.open(img)
         work_image=source_image.copy()
         work_image.thumbnail((1000,1000))
+        print("Imagem "+img+" redimensionada\n")
         if not proc_logo_url==False:
           work_image.paste(logo_image,logo_position)
+        print("Imagem "+img+" logo adicionada\n")
         if not os.path.exists(os.path.join(resized_dir,img.split("/")[-1])):
           work_image.save(os.path.join(resized_dir,img.split("/")[-1]))
+        print("Imagem "+img+" salva \n")
       except OSError:
-        print("Falhou uma imagem: "+img)
+        print("Falhou uma imagem: "+img+"\n")
         sleep(0.05)
         continue
 
 
 
 def zipem(nota_dir,resized_dir,nota):
+  print("Iniciando zips\n")
   files=glob.glob(os.path.join(resized_dir,"*.jpg"))
 
+  print(files)
   current_date=date.today().strftime("%Y%m%d")
 
   if not nota["nome_arquivo"]==None and not nota["nome_arquivo"]=="":
@@ -236,16 +247,20 @@ def zipem(nota_dir,resized_dir,nota):
   else:
     nota_zip_file=os.path.join(nota_dir,current_date+nota['numero_nota']+nota['serie_nota']+".zip")
     
+  print("arquivo da nota : "+nota_zip_file+" \n")
   with zipfile.ZipFile(nota_zip_file, 'w') as my_zip:
     for file_name in files:
+      print("Verificando "+file_name+" para adicionar ao zip... \n")
       if not file_name==None and file_name.find("(1)")==-1:
         try:
+          print("Adicionando imagem "+file_name+" ao zip \n")
           my_zip.write(file_name,file_name.split("/")[-1],compress_type=zipfile.ZIP_DEFLATED)
         except OSError:
           print("Falhou zipar imagem: "+file_name.split("/")[-1])
           sleep(0.05)
           continue
 
+  print("Iniciando upload do arquivo")
   s3_client = boto3.client('s3')
   s3_client.upload_file(nota_zip_file, 'marketing-lunelli', "produtoimagem/"+nota_zip_file.split("/")[-1])
   nota["nome_arquivo"]=nota_zip_file.split("/")[-1]
@@ -321,13 +336,13 @@ if __name__ == "__main__":
   main_conn=new_conn()
   running=run_select("SELECT numero_nota,serie_nota,time_to_sec(timediff(NOW(),updated_at ))/3600 as running_time FROM lepard_magento.systextil_notas where machine='"+thismachine+"' AND status='R' order by updated_at ASC",main_conn)
   con_running=len(running)
-  max_threads=10-con_running
+  max_threads=5-con_running
 
   if len(running)>0:
     if running[0]['running_time']>8:
       run_sql("UPDATE lepard_magento.systextil_notas SET status='P',machine=NULL WHERE machine='"+thismachine+"' AND status='R' AND numero_nota='"+running[0]['numero_nota']+"' AND serie_nota='"+running[0]['serie_nota']+"'",main_conn)
 
-  if con_running>9:
+  if con_running>4:
     quit()
   run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 4 MONTH),'%Y-%m-%d')",main_conn)
   #Pega as notas importadas
