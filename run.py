@@ -50,6 +50,13 @@ if os.path.exists("maxprocs"):
 
 maxrunprocs=maxprocs-1
 
+
+#  "-variacao.jpg",
+#  "-variacao01.jpg",
+#  "-variacao02.jpg",
+#  "-variacao03.jpg",
+#  "-variacao04.jpg",
+
 #Variáveis de trabalho
 resized_url="http://mktlunelli.lunenderstore.com/resizedimages/"
 zip_url="https://marketing-lunelli.s3-sa-east-1.amazonaws.com/produtoimagem/"
@@ -58,11 +65,6 @@ logos_dir=os.path.join(work_dir,'logos')
 logo_position=(30,40)
 img_variations=[
   ".jpg",
-  "-variacao.jpg",
-  "-variacao01.jpg",
-  "-variacao02.jpg",
-  "-variacao03.jpg",
-  "-variacao04.jpg",
   "-C1.jpg",
   "-C2.jpg",
   "-C3.jpg",
