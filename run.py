@@ -376,7 +376,7 @@ if __name__ == "__main__":
     for i in range(0,max_threads):
       if(len(notas)>0):
         nota=notas.pop(0)
-        if nota["canrun"]==0:
+        if nota["canrun"]>=1:
           thread=Process(target=ready_go,args=(nota,))
           jobs.append(thread)
     
