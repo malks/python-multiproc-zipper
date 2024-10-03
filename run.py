@@ -374,7 +374,7 @@ if __name__ == "__main__":
     quit()
   run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 4 MONTH),'%Y-%m-%d')",main_conn)
 
-  sleep(1-(maxprocs*maxprocs*2*random.uniform(0.0001,0.000135)))
+  sleep(1-(maxprocs*2*random.uniform(0.0001,0.000135)))
 
   #Pega as notas importadas
   notas=run_select("SELECT numero_nota,serie_nota,status,nome_arquivo FROM lepard_magento.systextil_notas where status='P' AND (machine IS NULL or machine='"+thismachine+"') order by updated_at asc limit "+str(max_threads),main_conn)
