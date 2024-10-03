@@ -101,6 +101,20 @@ logos={
 }
 image_formats = ("image/png", "image/jpeg", "image/jpg","binary/octet-stream")
 
+if not os.path.exists(os.path.join(os.getcwd(),"logos")):
+  print("Diretorio de logos principal sumiu")
+  quit()
+
+if not os.path.exists(work_dir):
+  os.popen("mkdir "+work_dir+";chmod 777 "+work_dir)
+
+if not os.path.exists(logos_dir):
+  os.popen("mkdir "+logos_dir+";chmod 777 "+logos_dir)
+
+for logo in logos:
+  if not os.path.exists(logos[logo]):
+    os.popen("cp "+os.path.join(os.path.join(os.getcwd(),"logos"),str(logo)+".jpg")+" "+logos_dir)
+
 #Link retorna imagem?
 def exists(path):
   r = requests.head(path)
