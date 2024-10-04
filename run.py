@@ -380,7 +380,7 @@ if __name__ == "__main__":
   notas=run_select("SELECT numero_nota,serie_nota,status,nome_arquivo FROM lepard_magento.systextil_notas where status='P' AND (machine IS NULL or machine='"+thismachine+"') order by updated_at asc limit "+str(max_threads),main_conn)
 
   for nota in notas:
-    run_sql("UPDATE lepard_magento.systextil_notas SET status='R',machine='"+thismachine+"' where numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"' and machine IS NULL",main_conn)
+    run_sql("UPDATE lepard_magento.systextil_notas SET status='R',machine='"+thismachine+"' where numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"' and (machine IS NULL or machine='"+thismachine+"')",main_conn)
     check=run_select("SELECT count(*) as success FROM lepard_magento.systextil_notas where machine='"+thismachine+"' AND status='R' AND numero_nota='"+nota["numero_nota"]+"' AND serie_nota='"+nota["serie_nota"]+"' order by updated_at ASC",main_conn)
     nota["canrun"]=check[0]["success"]
     nota['items']=get_items(nota['numero_nota'],nota['serie_nota'],main_conn)
