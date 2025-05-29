@@ -297,6 +297,11 @@ def zipem(nota_dir,resized_dir,nota):
 #Executa processos em cima de notas e itens
 def ready_go(nota):
   proc_conn=new_conn()
+  if not nota.get("items"):
+    run_sql("UPDATE lepard_magento.systextil_notas SET status='E',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE machine='"+thismachine+"' AND numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
+    proc_conn.close()
+    return
+
   for item in nota["items"]:
     nota_dir=item['numero_nota']+item['serie_nota']
     full_dir=os.path.join(work_dir,nota_dir)
