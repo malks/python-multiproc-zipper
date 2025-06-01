@@ -297,62 +297,66 @@ def zipem(nota_dir,resized_dir,nota):
 #Executa processos em cima de notas e itens
 def ready_go(nota):
   proc_conn=new_conn()
-  if not nota.get("items"):
-    run_sql("UPDATE lepard_magento.systextil_notas SET status='E',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE machine='"+thismachine+"' AND numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
-    proc_conn.close()
-    return
+  try:
+    if not nota.get("items"):
+      run_sql("UPDATE lepard_magento.systextil_notas SET status='E' WHERE machine='"+thismachine+"' AND numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
+      proc_conn.close()
+      return
 
-  for item in nota["items"]:
-    nota_dir=item['numero_nota']+item['serie_nota']
-    full_dir=os.path.join(work_dir,nota_dir)
-    source_dir=os.path.join(full_dir,"sources")
-    resized_dir=os.path.join(full_dir,"resized")
+    for item in nota["items"]:
+      nota_dir=item['numero_nota']+item['serie_nota']
+      full_dir=os.path.join(work_dir,nota_dir)
+      source_dir=os.path.join(full_dir,"sources")
+      resized_dir=os.path.join(full_dir,"resized")
 
-    if not os.path.exists(full_dir):
-      os.mkdir(full_dir)
+      if not os.path.exists(full_dir):
+        os.mkdir(full_dir)
 
-    if not os.path.exists(source_dir):
-      os.mkdir(source_dir)
+      if not os.path.exists(source_dir):
+        os.mkdir(source_dir)
 
-    if not os.path.exists(resized_dir):
-      os.mkdir(resized_dir)
+      if not os.path.exists(resized_dir):
+        os.mkdir(resized_dir)
 
-    if not len(item['images'])>0:
-      download_source(item,source_dir,resized_dir)
-      reduction_and_stamping(item,source_dir,resized_dir)
+      if not len(item['images'])>0:
+        download_source(item,source_dir,resized_dir)
+        reduction_and_stamping(item,source_dir,resized_dir)
+      else:
+        download_resized(item,resized_dir)
+
+    got_dir = "full_dir" in locals()
+
+    if got_dir:
+      zipem(full_dir,resized_dir,nota)
+
+    for item in nota["items"]:
+      upload_resized(resized_dir,item)
+      for img in item["images"]:
+        if exists_resized(img):
+          run_sql("INSERT IGNORE INTO lepard_magento.systextil_notas_itens_images (item,image) values('"+item["item"]+"','"+img+"')",proc_conn)
+
+    got_key=nota.get("nome_arquivo",None)
+
+    if got_key==None:
+      nota["nome_arquivo"]=""
+    
+    filesize=os.path.getsize(os.path.join(full_dir,nota["nome_arquivo"]))
+    if filesize>100:
+      print("LEGAL")
+    #Atualiza banco para depois atualizar o systextil
+    if filesize>100:
+      run_sql("UPDATE lepard_magento.systextil_notas SET status='S',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE machine='"+thismachine+"' AND numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
     else:
-      download_resized(item,resized_dir)
+      run_sql("UPDATE lepard_magento.systextil_notas SET status='E',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE machine='"+thismachine+"' AND numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
 
-  got_dir = "full_dir" in locals()
-
-  if got_dir:
-    zipem(full_dir,resized_dir,nota)
-
-  for item in nota["items"]:
-    upload_resized(resized_dir,item)
-    for img in item["images"]:
-      if exists_resized(img):
-        run_sql("INSERT IGNORE INTO lepard_magento.systextil_notas_itens_images (item,image) values('"+item["item"]+"','"+img+"')",proc_conn)
-
-  got_key=nota.get("nome_arquivo",None)
-
-  if got_key==None:
-    nota["nome_arquivo"]=""
-  
-  filesize=os.path.getsize(os.path.join(full_dir,nota["nome_arquivo"]))
-  if filesize>100:
-    print("LEGAL")
-  #Atualiza banco para depois atualizar o systextil
-  if filesize>100:
-    run_sql("UPDATE lepard_magento.systextil_notas SET status='S',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE machine='"+thismachine+"' AND numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
-  else:
-    run_sql("UPDATE lepard_magento.systextil_notas SET status='E',nome_arquivo='"+nota["nome_arquivo"]+"' WHERE machine='"+thismachine+"' AND numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
-
-  #Remove diretório da nota e seu conteúdo pra não manter sujeira no disco
-  if got_dir:
-    shutil.rmtree(full_dir)
-
-  proc_conn.close()
+    #Remove diretório da nota e seu conteúdo pra não manter sujeira no disco
+    if got_dir:
+      shutil.rmtree(full_dir)
+  except Exception as e:
+    print("Erro ao processar nota:", nota.get("numero_nota"), e)
+    run_sql("UPDATE lepard_magento.systextil_notas SET status='E' WHERE machine='"+thismachine+"' AND numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
+  finally:
+    proc_conn.close()
   
       
 
