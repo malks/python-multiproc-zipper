@@ -303,9 +303,10 @@ def ready_go(nota):
       proc_conn.close()
       return
 
+    nota_dir=nota['numero_nota']+nota['serie_nota']
+    full_dir=os.path.join(work_dir,nota_dir)
+
     for item in nota["items"]:
-      nota_dir=item['numero_nota']+item['serie_nota']
-      full_dir=os.path.join(work_dir,nota_dir)
       source_dir=os.path.join(full_dir,"sources")
       resized_dir=os.path.join(full_dir,"resized")
 
@@ -328,6 +329,14 @@ def ready_go(nota):
 
     if got_dir:
       zipem(full_dir,resized_dir,nota)
+    else:
+      print("OPS, PROBLEMA COM DIRETORIO")
+      print(work_dir)
+      print(nota)
+      run_sql("UPDATE lepard_magento.systextil_notas SET status='C' WHERE machine='"+thismachine+"' AND numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
+      proc_conn.close()
+      return
+
 
     for item in nota["items"]:
       upload_resized(resized_dir,item)
@@ -357,9 +366,6 @@ def ready_go(nota):
     run_sql("UPDATE lepard_magento.systextil_notas SET status='E' WHERE machine='"+thismachine+"' AND numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"'",proc_conn)
   finally:
     proc_conn.close()
-  
-      
-
 
 #Obtém os itens das notas que foram importadas pro nosso banco
 def get_items(nota,serie,conn):
@@ -387,12 +393,15 @@ if __name__ == "__main__":
 
   #Pega as notas importadas
   notas=run_select("SELECT numero_nota,serie_nota,status,nome_arquivo FROM lepard_magento.systextil_notas where status='P' AND (machine IS NULL or machine='"+thismachine+"') order by updated_at asc limit "+str(max_threads),main_conn)
-
+  print(notas);
   for nota in notas:
+    print(nota)
     run_sql("UPDATE lepard_magento.systextil_notas SET status='R',machine='"+thismachine+"' where numero_nota='"+nota["numero_nota"]+"' and serie_nota='"+nota["serie_nota"]+"' and (machine IS NULL or machine='"+thismachine+"')",main_conn)
     check=run_select("SELECT count(*) as success FROM lepard_magento.systextil_notas where machine='"+thismachine+"' AND status='R' AND numero_nota='"+nota["numero_nota"]+"' AND serie_nota='"+nota["serie_nota"]+"' order by updated_at ASC",main_conn)
     nota["canrun"]=check[0]["success"]
     nota['items']=get_items(nota['numero_nota'],nota['serie_nota'],main_conn)
+
+  main_conn.close()
 
   while len(notas)>0:
     jobs=[]
