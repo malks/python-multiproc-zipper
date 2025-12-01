@@ -115,6 +115,8 @@ for logo in logos:
   if not os.path.exists(logos[logo]):
     os.popen("cp "+os.path.join(os.path.join(os.getcwd(),"logos"),str(logo)+".jpg")+" "+logos_dir)
 
+pastanotas = [entry.name for entry in os.scandir(work_dir) if entry.is_dir() and entry.name!="logos"]
+
 #Link retorna imagem?
 def exists(path):
   r = requests.head(path)
@@ -380,6 +382,32 @@ if __name__ == "__main__":
   running=run_select("SELECT numero_nota,serie_nota,time_to_sec(timediff(NOW(),updated_at ))/3600 as running_time FROM lepard_magento.systextil_notas where machine='"+thismachine+"' AND status='R' order by updated_at ASC",main_conn)
   con_running=len(running)
   max_threads=maxprocs-con_running
+
+  #verifica se as pastas de notas tem nota aguardando/executando, se não tiver, remove
+  strnotas=",".join(pastanotas)
+
+  oknotas=run_select("SELECT concat(numero_nota,serie_nota) as nota FROM lepard_magento.systextil_notas where status in ('r','p') AND concat(numero_nota,serie_nota) in ("+strnotas+")",main_conn)
+  notas_validas = {nota['nota'] for nota in oknotas}
+
+  for nota in (pastanotas):
+    rempath = os.path.join(work_dir, nota)
+
+    # verifica se a nota retornou no select
+    if nota in notas_validas:
+        print(f"Nota válida no banco, não remover diretorio: {nota}")
+        continue
+
+    if not os.path.exists(rempath):
+        print(f"Caminho não existe: {rempath}")
+        continue
+
+    if not os.path.isdir(rempath):
+        print(f"Não é um diretório (pulando): {rempath}")
+        continue
+
+    shutil.rmtree(rempath)
+    print(f"Removido diretório de nota: {rempath}")
+
 
   if len(running)>0:
     if running[0]['running_time']>8:
