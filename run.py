@@ -384,29 +384,30 @@ if __name__ == "__main__":
   max_threads=maxprocs-con_running
 
   #verifica se as pastas de notas tem nota aguardando/executando, se não tiver, remove
-  strnotas=",".join(pastanotas)
+  if pastanotas:
+    strnotas=",".join(pastanotas)
 
-  oknotas=run_select("SELECT concat(numero_nota,serie_nota) as nota FROM lepard_magento.systextil_notas where status in ('r','p') AND concat(numero_nota,serie_nota) in ("+strnotas+")",main_conn)
-  notas_validas = {nota['nota'] for nota in oknotas}
+    oknotas=run_select("SELECT concat(numero_nota,serie_nota) as nota FROM lepard_magento.systextil_notas where status in ('r','p') AND concat(numero_nota,serie_nota) in ("+strnotas+")",main_conn)
+    notas_validas = {nota['nota'] for nota in oknotas}
 
-  for nota in (pastanotas):
-    rempath = os.path.join(work_dir, nota)
+    for nota in (pastanotas):
+      rempath = os.path.join(work_dir, nota)
 
-    # verifica se a nota retornou no select
-    if nota in notas_validas:
-        print(f"Nota válida no banco, não remover diretorio: {nota}")
-        continue
+      # verifica se a nota retornou no select
+      if nota in notas_validas:
+          print(f"Nota válida no banco, não remover diretorio: {nota}")
+          continue
 
-    if not os.path.exists(rempath):
-        print(f"Caminho não existe: {rempath}")
-        continue
+      if not os.path.exists(rempath):
+          print(f"Caminho não existe: {rempath}")
+          continue
 
-    if not os.path.isdir(rempath):
-        print(f"Não é um diretório (pulando): {rempath}")
-        continue
+      if not os.path.isdir(rempath):
+          print(f"Não é um diretório (pulando): {rempath}")
+          continue
 
-    shutil.rmtree(rempath)
-    print(f"Removido diretório de nota: {rempath}")
+      shutil.rmtree(rempath)
+      print(f"Removido diretório de nota: {rempath}")
 
 
   if len(running)>0:
