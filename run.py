@@ -125,7 +125,7 @@ def exists(path):
     return True
   print("Exst: "+path+" FALSE \n")
   return False
-  
+
 def exists_resized(path):
   r=requests.head(path)
   if "content-type" in r.headers and r.headers["content-type"] in image_formats:
@@ -342,6 +342,8 @@ def ready_go(nota):
 
     for item in nota["items"]:
       upload_resized(resized_dir,item)
+      if len(item["images"])>0:
+        run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE item='"+item["item"]+"' AND deprecated=1",proc_conn)
       for img in item["images"]:
         if exists_resized(img):
           run_sql("INSERT IGNORE INTO lepard_magento.systextil_notas_itens_images (item,image) values('"+item["item"]+"','"+img+"')",proc_conn)
@@ -373,7 +375,7 @@ def ready_go(nota):
 def get_items(nota,serie,conn):
   ret=run_select("SELECT * FROM lepard_magento.systextil_notas_itens WHERE numero_nota='"+nota+"' and serie_nota='"+serie+"'",conn)
   for i in ret:
-    i["images"]=run_select_array_ret("SELECT image FROM lepard_magento.systextil_notas_itens_images WHERE image NOT LIKE '% (1).%' AND item='"+i["item"]+"'",conn)
+    i["images"]=run_select_array_ret("SELECT image FROM lepard_magento.systextil_notas_itens_images WHERE image NOT LIKE '% (1).%' AND item='"+i["item"]+"' AND deprecated=0",conn)
   return ret
 
 #Para rodar na execução do python
@@ -416,7 +418,7 @@ if __name__ == "__main__":
 
   if con_running>maxrunprocs:
     quit()
-  #run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 4 MONTH),'%Y-%m-%d')",main_conn)
+  run_sql("UPDATE lepard_magento.systextil_notas_itens_images SET deprecated=1 WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 4 MONTH),'%Y-%m-%d')",main_conn)
 
   sleep(1-(maxprocs*2*random.uniform(0.0001,0.000135)))
 
