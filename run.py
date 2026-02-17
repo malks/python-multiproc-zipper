@@ -416,7 +416,7 @@ if __name__ == "__main__":
 
   if con_running>maxrunprocs:
     quit()
-  run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 4 MONTH),'%Y-%m-%d')",main_conn)
+  #run_sql("DELETE FROM lepard_magento.systextil_notas_itens_images WHERE date_format(created_at,'%Y-%m-%d') < date_format(date_sub(NOW(), INTERVAL 4 MONTH),'%Y-%m-%d')",main_conn)
 
   sleep(1-(maxprocs*2*random.uniform(0.0001,0.000135)))
 
