@@ -35,16 +35,23 @@ def exists_resized(path):
 
 if __name__ == "__main__":
     main_conn=new_conn()
-    items=run_select_array_ret("SELECT distinct systextil_notas_itens.item  FROM lepard_magento.systextil_notas_itens JOIN lepard_magento.systextil_notas ON lepard_magento.systextil_notas.numero_nota=lepard_magento.systextil_notas_itens.numero_nota AND lepard_magento.systextil_notas.serie_nota=lepard_magento.systextil_notas_itens.serie_nota LEFT JOIN lepard_magento.systextil_notas_itens_images ON lepard_magento.systextil_notas_itens.item = lepard_magento.systextil_notas_itens_images.item WHERE image IS NULL AND status='S' LIMIT 1000",main_conn)
+    items=run_select("SELECT distinct systextil_notas_itens.item,systextil_notas.numero_nota,systextil_notas.serie_nota  FROM lepard_magento.systextil_notas_itens JOIN lepard_magento.systextil_notas ON lepard_magento.systextil_notas.numero_nota=lepard_magento.systextil_notas_itens.numero_nota AND lepard_magento.systextil_notas.serie_nota=lepard_magento.systextil_notas_itens.serie_nota LEFT JOIN lepard_magento.systextil_notas_itens_images ON lepard_magento.systextil_notas_itens.item = lepard_magento.systextil_notas_itens_images.item WHERE images_restored=0 AND image IS NULL AND status='S' ORDER BY data_nota desc LIMIT 1000",main_conn)
 
     for item in items:
+        print(item)
+        run_sql(
+            "UPDATE lepard_magento.systextil_notas SET images_restored=1 WHERE numero_nota='" + item["numero_nota"] + "' AND serie_nota='" + item["serie_nota"] + "'",
+            main_conn
+        )
         for variation in img_variations:
-            img_url = resized_url + item + variation
+            img_url = resized_url + item["item"] + variation
+            print(img_url)
 
             if exists_resized(img_url):
+                print("existe, salvando")
                 run_sql(
                     "INSERT IGNORE INTO lepard_magento.systextil_notas_itens_images (item, image, deprecated) "
-                    "VALUES ('" + item + "','" + img_url + "',1)",
+                    "VALUES ('" + item["item"] + "','" + img_url + "',1)",
                     main_conn
                 )
                 
