@@ -54,5 +54,4 @@ if __name__ == "__main__":
                     "VALUES ('" + item["item"] + "','" + img_url + "',1)",
                     main_conn
                 )
-                
     main_conn.close()
