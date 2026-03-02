@@ -40,7 +40,7 @@ if __name__ == "__main__":
     for item in items:
         print(item)
         run_sql(
-            "UPDATE lepard_magento.systextil_notas SET images_restored=1 WHERE numero_nota='" + item["numero_nota"] + "' AND serie_nota='" + item["serie_nota"] + "'",
+            "UPDATE lepard_magento.systextil_notas SET images_restored=1 WHERE numero_nota='" + item["numero_nota"] + "' AND serie_nota='" + item["serie_nota"] + "' AND images_restored=0",
             main_conn
         )
         for variation in img_variations:
