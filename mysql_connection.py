@@ -17,6 +17,7 @@ def run_select_array_ret(select, conn):
   cursor.execute(select)
   result=cursor.fetchall()
   result=[res[0] for res in result]
+  cursor.close()
   return result
 
 def run_select(select,conn):
@@ -24,6 +25,7 @@ def run_select(select,conn):
   cursor = conn.cursor(dictionary=True)
   cursor.execute(select)
   result=cursor.fetchall()
+  cursor.close()
   return result
 
 
@@ -40,6 +42,7 @@ def run_sql(sql,conn):
     cursor.execute(sql)
 
   conn.commit()
+  cursor.close()
   return True
 
 
